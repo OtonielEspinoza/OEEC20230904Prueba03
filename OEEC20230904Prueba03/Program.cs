@@ -16,28 +16,38 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+var marcas = new List<Marca>();
 
-app.MapGet("/weatherforecast", () =>
+
+
+app.MapGet("/marcas/{id}", (int id) =>
 {
-    var forecast = Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateTime.Now.AddDays(index),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
+    var marca = marcas.FirstOrDefault(c => c.Id == id);
+    return marca;
+});
+
+app.MapPost("/marcas", (Marca marca) =>
+{
+marca.Id = marcas.Count + 1;
+marcas.Add(marca);
+return Results.Created($"/marcas/{marca.Id}", marca);
+});
+
+app.MapPut("/marcas/{id}", (int id, Marca marca) =>
+{
+var existingMarca = marcas.FirstOrDefault(m => m.Id == id);
+if (existingMarca != null)
+{
+existingMarca.Nombre = marca.Nombre;
+return Results.Ok();
+}
+return Results.NotFound();
+});
 
 app.Run();
 
-internal record WeatherForecast(DateTime Date, int TemperatureC, string? Summary)
+internal class Marca
 {
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
+    public int Id { get; set; }
+    public string Nombre { get; set; }
 }
